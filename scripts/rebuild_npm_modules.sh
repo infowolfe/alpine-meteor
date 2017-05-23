@@ -1,67 +1,19 @@
-set -e 
-gyp_rebuild_inside_node_modules () {
-  for npmModule in ./*; do
-    cd $npmModule
+set -e
 
-    isBinaryModule="no"
-    # recursively rebuild npm modules inside node_modules
-    check_for_binary_modules () {
-      if [ -f binding.gyp ]; then
-        isBinaryModule="yes"
-      fi
+export PYTHONPATH=/usr/lib/python2.7/
+export GYP_DEFINES="linux_use_gold_flags=0"
 
-      if [ $isBinaryModule != "yes" ]; then
-        if [ -d ./node_modules ]; then
-          cd ./node_modules
-          for module in ./*; do
-            cd $module
-            check_for_binary_modules
-            cd ..
-          done
-          cd ../
-        fi
-      fi
-    }
+BINARY_MODULES=$(find /app -name 'binding\.gyp' -exec dirname {} \; | grep -v fibers)
+DIR=$PWD
 
-    check_for_binary_modules
+echo "Start rebuild node modules.."
+echo $DIR
 
-    if [ $isBinaryModule == "yes" ]; then
-      echo " > $npmModule: npm install due to binary npm modules"
-      rm -rf node_modules
-      if [ -f binding.gyp ]; then
-        npm install
-        node-gyp rebuild || :
-      else
-        npm install
-      fi
-    fi
+for BINARY_MODULE in $BINARY_MODULES; do
+    cd $BINARY_MODULE
+    echo "node-gyp rebuilding in $BINARY_MODULE"
+    node-gyp rebuild
+    cd $DIR
+done
 
-    cd ..
-  done
-}
-
-rebuild_binary_npm_modules () {
-  for package in ./*; do
-    if [ -d $package/node_modules ]; then
-      cd $package/node_modules
-        gyp_rebuild_inside_node_modules
-      cd ../../
-    elif [ -d $package/main/node_module ]; then
-      cd $package/node_modules
-        gyp_rebuild_inside_node_modules
-      cd ../../../
-    fi
-  done
-}
-
-if [ -d ./npm ]; then
-  cd npm
-  rebuild_binary_npm_modules
-  cd ../
-fi
-
-if [ -d ./node_modules ]; then
-  cd ./node_modules
-  gyp_rebuild_inside_node_modules
-  cd ../
-fi
+echo "END rebuild node modules.."

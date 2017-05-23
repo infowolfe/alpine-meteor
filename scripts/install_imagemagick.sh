@@ -2,4 +2,4 @@ set -e
 
 apk --update add imagemagick
 
-sh $METEORD_DIR/clean-soft.sh
+sh /script/clean-soft.sh

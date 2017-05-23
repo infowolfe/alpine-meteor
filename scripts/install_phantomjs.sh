@@ -9,4 +9,4 @@ curl -Ls "https://github.com/dustinblackman/phantomized/releases/download/2.1.1/
 
 npm install -g phantomjs
 
-sh $METEORD_DIR/clean-soft.sh
+sh /script/clean-soft.sh
